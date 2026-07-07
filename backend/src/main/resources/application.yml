@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: feebridge
+  # Default profile runs on in-memory H2 in PostgreSQL-compatibility mode so the
+  # backend boots and is fully demoable without Docker/Postgres. Use the "postgres"
+  # profile (application-postgres.yml) for the real database via docker-compose.
+  datasource:
+    url: jdbc:h2:mem:feebridge;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none          # Flyway owns the schema
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+
+feebridge:
+  demo-data: ${FEEBRIDGE_DEMO_DATA:true}      # seed a demo school on startup
+  mail:
+    from: no-reply@feebridge.africa
+  security:
+    jwt:
+      secret: ${JWT_SECRET:feebridge-dev-secret-please-change-in-production-0123456789-abcdef}
+      access-token-ttl-minutes: ${JWT_TTL_MINUTES:240}
+  nomba:
+    base-url: ${NOMBA_BASE_URL:https://api.nomba.com}
+    client-id: ${NOMBA_CLIENT_ID:sandbox-client-id}
+    client-secret: ${NOMBA_CLIENT_SECRET:sandbox-secret}
+    account-id: ${NOMBA_ACCOUNT_ID:sandbox-account-id}
+    signature-key: ${NOMBA_SIGNATURE_KEY:sandbox-signature-key}
+    virtual-account-ttl-minutes: 30
+    enabled: ${NOMBA_ENABLED:false}           # false -> use the built-in fake gateway
+  sms:
+    provider: ${SMS_PROVIDER:log}             # log | termii | twilio
+    sender-id: FeeBridge
+
+logging:
+  level:
+    org.flywaydb: INFO
+    com.feebridge: DEBUG

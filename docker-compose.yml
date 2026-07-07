@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: feebridge-postgres
+    environment:
+      POSTGRES_DB: feebridge
+      POSTGRES_USER: feebridge
+      POSTGRES_PASSWORD: feebridge
+    ports:
+      - "5432:5432"
+    volumes:
+      - feebridge_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U feebridge"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: feebridge-mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+
+  backend:
+    build: ./backend
+    container_name: feebridge-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      DB_URL: jdbc:postgresql://postgres:5432/feebridge
+      DB_USERNAME: feebridge
+      DB_PASSWORD: feebridge
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      JWT_SECRET: feebridge-compose-secret-change-me-please-0123456789-abcdef
+      NOMBA_ENABLED: "false"
+      FEEBRIDGE_DEMO_DATA: "true"
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build: ./frontend
+    container_name: feebridge-frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+    ports:
+      - "5173:80"
+
+volumes:
+  feebridge_pgdata:
