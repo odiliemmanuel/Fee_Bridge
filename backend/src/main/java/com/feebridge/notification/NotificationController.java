@@ -28,6 +28,7 @@ public class NotificationController {
                                      String error, Instant createdAt) {
     }
 
+
     @GetMapping
     public PageResponse<NotificationLogDto> list(@PageableDefault(size = 20) Pageable pageable) {
         return PageResponse.from(logRepository.findBySchoolIdOrderByCreatedAtDesc(CurrentUser.schoolId(), pageable),
